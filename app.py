@@ -1,9 +1,9 @@
 """
-Hello World API using Flask. this is  test
+Hello World API using Flask. This is a test.
 A simple REST API that returns a hello world message.
 """
 import os
-from flask import Flask, jsonify
+from flask import Flask, jsonify, request
 
 app = Flask(__name__)
 
@@ -35,9 +35,47 @@ def home():
         'version': '1.0',
         'endpoints': {
             '/': 'API information',
-            '/hello': 'Returns hello world message'
+            '/hello': 'Returns hello world message',
+            '/login': 'Login with username and password (POST)'
         }
     })
+
+
+@app.route('/login', methods=['POST'])
+def login():
+    """
+    Login endpoint that validates username and password.
+    
+    Expects JSON body with:
+        username (str): The username
+        password (str): The password
+    
+    Returns:
+        JSON response with login status
+    """
+    data = request.get_json(silent=True)
+    
+    if not data:
+        return jsonify({
+            'status': 'error',
+            'message': 'No data provided'
+        }), 400
+    
+    username = data.get('username')
+    password = data.get('password')
+    
+    if not username or not password:
+        return jsonify({
+            'status': 'error',
+            'message': 'Username and password are required'
+        }), 400
+    
+    # Simple validation (in production, this should check against a database)
+    return jsonify({
+        'status': 'success',
+        'message': 'Login successful',
+        'username': username
+    }), 200
 
 
 if __name__ == '__main__':
