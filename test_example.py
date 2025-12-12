@@ -2,6 +2,7 @@
 Simple test file for test issue
 This demonstrates the SDLC workflow is functioning correctly.
 """
+import sys
 
 def test_basic():
     """A basic test to verify the setup works"""
@@ -18,4 +19,4 @@ if __name__ == "__main__":
         print("All tests passed!")
     except AssertionError as e:
         print(f"Test failed: {e}")
-        exit(1)
+        sys.exit(1)
