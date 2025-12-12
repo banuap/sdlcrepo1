@@ -2,6 +2,7 @@
 Hello World API using Flask
 A simple REST API that returns a hello world message.
 """
+import os
 from flask import Flask, jsonify
 
 app = Flask(__name__)
@@ -40,4 +41,5 @@ def home():
 
 
 if __name__ == '__main__':
-    app.run(debug=True, host='0.0.0.0', port=5000)
+    debug_mode = os.environ.get('FLASK_DEBUG', 'False').lower() == 'true'
+    app.run(debug=debug_mode, host='0.0.0.0', port=5000)

@@ -4,11 +4,11 @@ Tests the API endpoints to ensure they return correct responses.
 """
 import sys
 import json
+from app import app
 
 
 def test_hello_endpoint():
     """Test the /hello endpoint"""
-    from app import app
     
     client = app.test_client()
     response = client.get('/hello')
@@ -23,8 +23,6 @@ def test_hello_endpoint():
 
 def test_home_endpoint():
     """Test the home endpoint"""
-    from app import app
-    
     client = app.test_client()
     response = client.get('/')
     
