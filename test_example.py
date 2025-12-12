@@ -12,6 +12,10 @@ def test_addition():
     assert 1 + 1 == 2, "Math should work correctly"
 
 if __name__ == "__main__":
-    test_basic()
-    test_addition()
-    print("All tests passed!")
+    try:
+        test_basic()
+        test_addition()
+        print("All tests passed!")
+    except AssertionError as e:
+        print(f"Test failed: {e}")
+        exit(1)
