@@ -1,5 +1,5 @@
 """
-Hello World API using Flask. this is  test
+Hello World API using Flask. This is a test.
 A simple REST API that returns a hello world message.
 """
 import os
@@ -71,12 +71,11 @@ def login():
         }), 400
     
     # Simple validation (in production, this should check against a database)
-    if username and password:
-        return jsonify({
-            'status': 'success',
-            'message': 'Login successful',
-            'username': username
-        }), 200
+    return jsonify({
+        'status': 'success',
+        'message': 'Login successful',
+        'username': username
+    }), 200
 
 
 if __name__ == '__main__':
