@@ -18,19 +18,32 @@ jobs:
       
     - name: Trigger Operations Agent Deployment
       env:
-        OPERATIONS_API_URL: http://your-operations-api-url.com
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        OPERATIONS_API_URL: http://136.116.239.143
       run: |
-        echo "PR #${{ github.event.pull_request.number }} was merged into ${{ github.event.pull_request.base.ref }}"
-        echo "Branch: ${{ github.event.pull_request.head.ref }}"
-        echo "Repository: ${{ github.repository }}"
+        echo " PR #${{ github.event.pull_request.number }} was merged into ${{ github.event.pull_request.base.ref }}"
+        echo " Branch: ${{ github.event.pull_request.head.ref }}"
+        echo " Repository: ${{ github.repository }}"
+        echo " Merged by: ${{ github.event.pull_request.merged_by.login }}"
+        echo ""
+        echo " Triggering deployment via Operations Agent..."
         
         # Call operations agent API to trigger deployment
-        curl -X POST $OPERATIONS_API_URL/deploy \
+        RESPONSE=$(curl -s -w "\n%{http_code}" -X POST $OPERATIONS_API_URL/deploy/branch \
           -H "Content-Type: application/json" \
           -d "{
             \"repo_url\": \"https://github.com/${{ github.repository }}.git\",
-            \"branch\": \"${{ github.event.pull_request.head.ref }}\",
-            \"pr_number\": ${{ github.event.pull_request.number }},
-            \"merged_by\": \"${{ github.event.pull_request.merged_by.login }}\"
-          }"
+            \"branch\": \"${{ github.event.pull_request.head.ref }}\"
+          }")
+        
+        HTTP_CODE=$(echo "$RESPONSE" | tail -n1)
+        BODY=$(echo "$RESPONSE" | head -n-1)
+        
+        echo "Response Code: $HTTP_CODE"
+        echo "Response Body: $BODY"
+        
+        if [ "$HTTP_CODE" -ge 200 ] && [ "$HTTP_CODE" -lt 300 ]; then
+          echo " Deployment triggered successfully!"
+        else
+          echo " Deployment failed with HTTP code $HTTP_CODE"
+          exit 1
+        fi
