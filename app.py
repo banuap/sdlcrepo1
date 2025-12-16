@@ -3,7 +3,7 @@ Hello World API using Flask. This is a test.
 A simple REST API that returns a hello world message.
 """
 import os
-from flask import Flask, jsonify, request
+from flask import Flask, jsonify, request, render_template
 
 app = Flask(__name__)
 
@@ -36,7 +36,8 @@ def home():
         'endpoints': {
             '/': 'API information',
             '/hello': 'Returns hello world message',
-            '/login': 'Login with username and password (POST)'
+            '/login': 'Login with username and password (POST)',
+            '/welcome': 'Welcome page (HTML)'
         }
     })
 
@@ -76,6 +77,17 @@ def login():
         'message': 'Login successful',
         'username': username
     }), 200
+
+
+@app.route('/welcome', methods=['GET'])
+def welcome():
+    """
+    Welcome page that provides a friendly introduction to the API.
+    
+    Returns:
+        HTML page with welcome message and API information
+    """
+    return render_template('welcome.html')
 
 
 if __name__ == '__main__':
