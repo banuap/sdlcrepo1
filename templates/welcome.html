@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Welcome to Hello World API</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            margin: 0;
+            padding: 0;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+        .container {
+            background: white;
+            border-radius: 20px;
+            padding: 50px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            max-width: 600px;
+            text-align: center;
+        }
+        h1 {
+            color: #667eea;
+            margin-bottom: 20px;
+            font-size: 2.5em;
+        }
+        p {
+            color: #555;
+            font-size: 1.2em;
+            line-height: 1.6;
+            margin-bottom: 30px;
+        }
+        .api-info {
+            background: #f7f7f7;
+            border-radius: 10px;
+            padding: 20px;
+            margin-top: 30px;
+        }
+        .api-info h2 {
+            color: #764ba2;
+            font-size: 1.5em;
+            margin-bottom: 15px;
+        }
+        .endpoint {
+            background: white;
+            padding: 10px;
+            margin: 10px 0;
+            border-radius: 5px;
+            border-left: 4px solid #667eea;
+            text-align: left;
+        }
+        .endpoint code {
+            color: #667eea;
+            font-weight: bold;
+        }
+        .footer {
+            margin-top: 30px;
+            color: #888;
+            font-size: 0.9em;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Welcome! 🎉</h1>
+        <p>Welcome to the Hello World API. This is a simple REST API built with Flask that demonstrates basic API functionality.</p>
+        
+        <div class="api-info">
+            <h2>Available Endpoints</h2>
+            <div class="endpoint">
+                <code>GET /</code> - API information
+            </div>
+            <div class="endpoint">
+                <code>GET /hello</code> - Returns a hello world message
+            </div>
+            <div class="endpoint">
+                <code>POST /login</code> - Login with username and password
+            </div>
+            <div class="endpoint">
+                <code>GET /welcome</code> - This welcome page
+            </div>
+        </div>
+        
+        <div class="footer">
+            <p>Version 1.0 | Built with Flask</p>
+        </div>
+    </div>
+</body>
+</html>

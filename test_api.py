@@ -90,6 +90,17 @@ def test_login_missing_password():
     assert 'Username and password are required' in data['message'], "Error message should mention required fields"
 
 
+def test_welcome_endpoint():
+    """Test the /welcome endpoint"""
+    client = app.test_client()
+    response = client.get('/welcome')
+    
+    assert response.status_code == 200, "Expected status code 200"
+    assert response.content_type == 'text/html; charset=utf-8', "Response should be HTML"
+    assert b'Welcome' in response.data, "Page should contain 'Welcome'"
+    assert b'Hello World API' in response.data, "Page should mention the API name"
+
+
 if __name__ == "__main__":
     try:
         test_hello_endpoint()
@@ -109,6 +120,9 @@ if __name__ == "__main__":
         
         test_login_missing_password()
         print("✓ test_login_missing_password passed")
+        
+        test_welcome_endpoint()
+        print("✓ test_welcome_endpoint passed")
         
         print("\nAll tests passed!")
     except AssertionError as e:
