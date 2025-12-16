@@ -566,13 +566,21 @@
         // Save profile
         async function saveProfile() {
             const profileId = document.getElementById('profileId').value;
+            const copiesValue = parseInt(document.getElementById('copies').value);
+            
+            // Validate copies
+            if (isNaN(copiesValue) || copiesValue < 1) {
+                showAlert('Number of copies must be a valid number greater than 0', 'error');
+                return;
+            }
+            
             const profileData = {
                 name: document.getElementById('profileName').value,
                 paper_size: document.getElementById('paperSize').value,
                 orientation: document.getElementById('orientation').value,
                 color_mode: document.getElementById('colorMode').value,
                 quality: document.getElementById('quality').value,
-                copies: parseInt(document.getElementById('copies').value),
+                copies: copiesValue,
                 duplex: document.getElementById('duplex').checked,
                 is_favorite: document.getElementById('isFavorite').checked
             };
@@ -661,12 +669,20 @@
         
         // Update preview
         async function updatePreview() {
+            const copiesValue = parseInt(document.getElementById('copies').value);
+            
+            // Validate copies
+            if (isNaN(copiesValue) || copiesValue < 1) {
+                showAlert('Number of copies must be a valid number greater than 0', 'error');
+                return;
+            }
+            
             const settings = {
                 paper_size: document.getElementById('paperSize').value,
                 orientation: document.getElementById('orientation').value,
                 color_mode: document.getElementById('colorMode').value,
                 quality: document.getElementById('quality').value,
-                copies: parseInt(document.getElementById('copies').value),
+                copies: copiesValue,
                 duplex: document.getElementById('duplex').checked
             };
             

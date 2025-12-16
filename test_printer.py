@@ -224,7 +224,7 @@ def test_preview_without_data():
     client = app.test_client()
     
     response = client.post('/printer/preview',
-                          data='',
+                          json={},
                           content_type='application/json')
     
     assert response.status_code == 400, "Expected status code 400"
