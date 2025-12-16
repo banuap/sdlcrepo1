@@ -1,4 +1,4 @@
-﻿name: Build and Push to Artifact Registry
+﻿name: Build, Push, and Deploy to GKE
 
 on:
   pull_request:
@@ -7,8 +7,7 @@ on:
       - main
 
 jobs:
-  build-and-push:
-    # Only run if PR was actually merged
+  build-push-deploy:
     if: github.event.pull_request.merged == true
     runs-on: ubuntu-latest
     
@@ -34,15 +33,31 @@ jobs:
     - name: Configure Docker for Artifact Registry
       run: gcloud auth configure-docker us-central1-docker.pkg.dev
       
-    - name: Generate image tag
+    - name: Install gke-gcloud-auth-plugin
+      run: |
+        gcloud components install gke-gcloud-auth-plugin
+        
+    - name: Get GKE credentials
+      run: |
+        gcloud container clusters get-credentials schwab-cluster \
+          --region=us-central1 \
+          --project=sparkle-labs-310106
+      
+    - name: Generate image tag and namespace
       id: image-tag
       run: |
         TIMESTAMP=$(date +%Y%m%d-%H%M%S)
         REPO_NAME=$(echo ${{ github.repository }} | cut -d'/' -f2)
         IMAGE_NAME="us-central1-docker.pkg.dev/sparkle-labs-310106/mcp-server/${REPO_NAME}:${TIMESTAMP}"
+        NAMESPACE="${REPO_NAME}"
+        
         echo "image_name=${IMAGE_NAME}" >> $GITHUB_OUTPUT
+        echo "image_latest=us-central1-docker.pkg.dev/sparkle-labs-310106/mcp-server/${REPO_NAME}:latest" >> $GITHUB_OUTPUT
+        echo "app_name=${REPO_NAME}" >> $GITHUB_OUTPUT
+        echo "namespace=${NAMESPACE}" >> $GITHUB_OUTPUT
         echo "timestamp=${TIMESTAMP}" >> $GITHUB_OUTPUT
         echo " Image: ${IMAGE_NAME}"
+        echo " Namespace: ${NAMESPACE}"
         
     - name: Build and push Docker image
       uses: docker/build-push-action@v5
@@ -51,9 +66,84 @@ jobs:
         push: true
         tags: |
           ${{ steps.image-tag.outputs.image_name }}
-          us-central1-docker.pkg.dev/sparkle-labs-310106/mcp-server/${{ github.event.repository.name }}:latest
+          ${{ steps.image-tag.outputs.image_latest }}
         cache-from: type=gha
         cache-to: type=gha,mode=max
+    
+    - name: Create Namespace
+      run: |
+        NAMESPACE="${{ steps.image-tag.outputs.namespace }}"
+        
+        if kubectl get namespace ${NAMESPACE} 2>/dev/null; then
+          echo " Namespace ${NAMESPACE} already exists"
+        else
+          echo " Creating namespace ${NAMESPACE}..."
+          kubectl create namespace ${NAMESPACE}
+          kubectl label namespace ${NAMESPACE} managed-by=github-actions
+          kubectl label namespace ${NAMESPACE} repo=${{ github.repository }}
+        fi
+        
+    - name: Deploy to GKE
+      run: |
+        APP_NAME="${{ steps.image-tag.outputs.app_name }}"
+        IMAGE="${{ steps.image-tag.outputs.image_name }}"
+        NAMESPACE="${{ steps.image-tag.outputs.namespace }}"
+        
+        # Check if deployment exists
+        if kubectl get deployment ${APP_NAME} -n ${NAMESPACE} 2>/dev/null; then
+          echo " Updating existing deployment in namespace ${NAMESPACE}..."
+          kubectl set image deployment/${APP_NAME} ${APP_NAME}=${IMAGE} -n ${NAMESPACE}
+          kubectl rollout status deployment/${APP_NAME} -n ${NAMESPACE} --timeout=5m
+        else
+          echo " Creating new deployment in namespace ${NAMESPACE}..."
+          
+          # Create deployment
+          kubectl create deployment ${APP_NAME} --image=${IMAGE} -n ${NAMESPACE}
+          
+          # Add labels
+          kubectl label deployment ${APP_NAME} app=${APP_NAME} -n ${NAMESPACE}
+          kubectl label deployment ${APP_NAME} managed-by=github-actions -n ${NAMESPACE}
+          
+          # Set resource limits
+          kubectl set resources deployment ${APP_NAME} \
+            --limits=cpu=500m,memory=512Mi \
+            --requests=cpu=200m,memory=256Mi \
+            -n ${NAMESPACE}
+          
+          # Expose as LoadBalancer service
+          kubectl expose deployment ${APP_NAME} \
+            --type=LoadBalancer \
+            --port=80 \
+            --target-port=8080 \
+            --name=${APP_NAME} \
+            -n ${NAMESPACE}
+          
+          echo " Waiting for deployment to be ready..."
+          kubectl rollout status deployment/${APP_NAME} -n ${NAMESPACE} --timeout=5m
+        fi
+        
+    - name: Get Service URL
+      id: service-url
+      run: |
+        APP_NAME="${{ steps.image-tag.outputs.app_name }}"
+        NAMESPACE="${{ steps.image-tag.outputs.namespace }}"
+        
+        echo " Waiting for LoadBalancer IP..."
+        for i in {1..30}; do
+          EXTERNAL_IP=$(kubectl get service ${APP_NAME} -n ${NAMESPACE} -o jsonpath='{.status.loadBalancer.ingress[0].ip}' 2>/dev/null || echo "")
+          if [ ! -z "$EXTERNAL_IP" ]; then
+            echo "external_ip=${EXTERNAL_IP}" >> $GITHUB_OUTPUT
+            echo " Service available at: http://${EXTERNAL_IP}"
+            break
+          fi
+          echo "Waiting for IP... (${i}/30)"
+          sleep 10
+        done
+        
+        if [ -z "$EXTERNAL_IP" ]; then
+          echo " LoadBalancer IP not yet assigned. Check later with: kubectl get service ${APP_NAME} -n ${NAMESPACE}"
+          echo "external_ip=pending" >> $GITHUB_OUTPUT
+        fi
         
     - name: Deployment Summary
       run: |
@@ -63,5 +153,28 @@ jobs:
         echo "- **Branch**: ${{ github.event.pull_request.head.ref }}" >> $GITHUB_STEP_SUMMARY
         echo "- **PR**: #${{ github.event.pull_request.number }}" >> $GITHUB_STEP_SUMMARY
         echo "- **Merged by**: @${{ github.event.pull_request.merged_by.login }}" >> $GITHUB_STEP_SUMMARY
+        echo "- **Cluster**: schwab-cluster (us-central1)" >> $GITHUB_STEP_SUMMARY
+        echo "- **Namespace**: \`${{ steps.image-tag.outputs.namespace }}\`" >> $GITHUB_STEP_SUMMARY
         echo "- **Image**: \`${{ steps.image-tag.outputs.image_name }}\`" >> $GITHUB_STEP_SUMMARY
-        echo "- **Latest**: \`us-central1-docker.pkg.dev/sparkle-labs-310106/mcp-server/${{ github.event.repository.name }}:latest\`" >> $GITHUB_STEP_SUMMARY
+        echo "- **Latest**: \`${{ steps.image-tag.outputs.image_latest }}\`" >> $GITHUB_STEP_SUMMARY
+        echo "" >> $GITHUB_STEP_SUMMARY
+        
+        if [ "${{ steps.service-url.outputs.external_ip }}" != "pending" ]; then
+          echo "- ** Service URL**: http://${{ steps.service-url.outputs.external_ip }}" >> $GITHUB_STEP_SUMMARY
+        else
+          echo "- **Status**:  Waiting for LoadBalancer IP assignment" >> $GITHUB_STEP_SUMMARY
+          echo "- **Check with**: \`kubectl get service ${{ steps.image-tag.outputs.app_name }} -n ${{ steps.image-tag.outputs.namespace }}\`" >> $GITHUB_STEP_SUMMARY
+        fi
+        
+        echo "" >> $GITHUB_STEP_SUMMARY
+        echo "###  Quick Commands" >> $GITHUB_STEP_SUMMARY
+        echo "\`\`\`bash" >> $GITHUB_STEP_SUMMARY
+        echo "# View pods" >> $GITHUB_STEP_SUMMARY
+        echo "kubectl get pods -n ${{ steps.image-tag.outputs.namespace }}" >> $GITHUB_STEP_SUMMARY
+        echo "" >> $GITHUB_STEP_SUMMARY
+        echo "# View logs" >> $GITHUB_STEP_SUMMARY
+        echo "kubectl logs -l app=${{ steps.image-tag.outputs.app_name }} -n ${{ steps.image-tag.outputs.namespace }}" >> $GITHUB_STEP_SUMMARY
+        echo "" >> $GITHUB_STEP_SUMMARY
+        echo "# Get service details" >> $GITHUB_STEP_SUMMARY
+        echo "kubectl get service ${{ steps.image-tag.outputs.app_name }} -n ${{ steps.image-tag.outputs.namespace }}" >> $GITHUB_STEP_SUMMARY
+        echo "\`\`\`" >> $GITHUB_STEP_SUMMARY
