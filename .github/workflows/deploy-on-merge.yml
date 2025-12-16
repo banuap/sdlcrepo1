@@ -1,0 +1,36 @@
+﻿name: Deploy on PR Merge
+
+on:
+  pull_request:
+    types: [closed]
+    branches:
+      - main
+
+jobs:
+  deploy:
+    # Only run if PR was actually merged (not just closed)
+    if: github.event.pull_request.merged == true
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: Trigger Operations Agent Deployment
+      env:
+        OPERATIONS_API_URL: http://your-operations-api-url.com
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      run: |
+        echo "PR #${{ github.event.pull_request.number }} was merged into ${{ github.event.pull_request.base.ref }}"
+        echo "Branch: ${{ github.event.pull_request.head.ref }}"
+        echo "Repository: ${{ github.repository }}"
+        
+        # Call operations agent API to trigger deployment
+        curl -X POST $OPERATIONS_API_URL/deploy \
+          -H "Content-Type: application/json" \
+          -d "{
+            \"repo_url\": \"https://github.com/${{ github.repository }}.git\",
+            \"branch\": \"${{ github.event.pull_request.head.ref }}\",
+            \"pr_number\": ${{ github.event.pull_request.number }},
+            \"merged_by\": \"${{ github.event.pull_request.merged_by.login }}\"
+          }"
