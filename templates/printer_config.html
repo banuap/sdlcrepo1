@@ -1,0 +1,723 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Smart Printer Configuration</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+        
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            overflow: hidden;
+        }
+        
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 30px;
+            text-align: center;
+        }
+        
+        .header h1 {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+        }
+        
+        .header p {
+            font-size: 1.1em;
+            opacity: 0.9;
+        }
+        
+        .main-content {
+            display: grid;
+            grid-template-columns: 1fr 2fr 1fr;
+            gap: 20px;
+            padding: 30px;
+        }
+        
+        @media (max-width: 1200px) {
+            .main-content {
+                grid-template-columns: 1fr;
+            }
+        }
+        
+        .section {
+            background: #f8f9fa;
+            border-radius: 10px;
+            padding: 20px;
+        }
+        
+        .section h2 {
+            color: #667eea;
+            margin-bottom: 15px;
+            font-size: 1.5em;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .section h2::before {
+            content: '⚙️';
+            font-size: 1.2em;
+        }
+        
+        .profiles-section h2::before {
+            content: '📋';
+        }
+        
+        .preview-section h2::before {
+            content: '👁️';
+        }
+        
+        .profile-list {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            margin-top: 15px;
+        }
+        
+        .profile-item {
+            background: white;
+            padding: 15px;
+            border-radius: 8px;
+            border: 2px solid transparent;
+            cursor: pointer;
+            transition: all 0.3s;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .profile-item:hover {
+            border-color: #667eea;
+            transform: translateX(5px);
+        }
+        
+        .profile-item.active {
+            border-color: #667eea;
+            background: #f0f4ff;
+        }
+        
+        .profile-item.favorite::after {
+            content: '⭐';
+            margin-left: 10px;
+        }
+        
+        .profile-actions {
+            display: flex;
+            gap: 5px;
+        }
+        
+        .preset-buttons {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+        
+        .preset-btn {
+            background: white;
+            padding: 15px;
+            border: 2px solid #667eea;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s;
+            text-align: left;
+            font-size: 1em;
+            color: #333;
+        }
+        
+        .preset-btn:hover {
+            background: #667eea;
+            color: white;
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.3);
+        }
+        
+        .preset-btn strong {
+            display: block;
+            margin-bottom: 5px;
+            font-size: 1.1em;
+        }
+        
+        .preset-btn small {
+            opacity: 0.7;
+        }
+        
+        .form-group {
+            margin-bottom: 20px;
+        }
+        
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            color: #333;
+            font-weight: 600;
+        }
+        
+        .form-group input,
+        .form-group select {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #ddd;
+            border-radius: 8px;
+            font-size: 1em;
+            transition: border-color 0.3s;
+        }
+        
+        .form-group input:focus,
+        .form-group select:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+        
+        .form-group input[type="checkbox"] {
+            width: auto;
+            margin-right: 8px;
+        }
+        
+        .checkbox-group {
+            display: flex;
+            align-items: center;
+        }
+        
+        .button-group {
+            display: flex;
+            gap: 10px;
+            margin-top: 20px;
+        }
+        
+        .btn {
+            flex: 1;
+            padding: 12px 20px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 1em;
+            font-weight: 600;
+            transition: all 0.3s;
+        }
+        
+        .btn-primary {
+            background: #667eea;
+            color: white;
+        }
+        
+        .btn-primary:hover {
+            background: #5568d3;
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.3);
+        }
+        
+        .btn-secondary {
+            background: #6c757d;
+            color: white;
+        }
+        
+        .btn-secondary:hover {
+            background: #5a6268;
+        }
+        
+        .btn-danger {
+            background: #dc3545;
+            color: white;
+            padding: 8px 12px;
+            font-size: 0.9em;
+        }
+        
+        .btn-danger:hover {
+            background: #c82333;
+        }
+        
+        .btn-small {
+            padding: 8px 12px;
+            font-size: 0.9em;
+        }
+        
+        .preview-area {
+            background: white;
+            border: 2px dashed #667eea;
+            border-radius: 8px;
+            padding: 30px;
+            min-height: 400px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            margin-top: 15px;
+        }
+        
+        .preview-page {
+            background: white;
+            box-shadow: 0 5px 20px rgba(0, 0, 0, 0.1);
+            padding: 20px;
+            max-width: 300px;
+            transition: all 0.3s;
+        }
+        
+        .preview-page.portrait {
+            width: 210px;
+            height: 297px;
+        }
+        
+        .preview-page.landscape {
+            width: 297px;
+            height: 210px;
+        }
+        
+        .preview-content {
+            font-size: 0.8em;
+            color: #666;
+            line-height: 1.6;
+        }
+        
+        .preview-info {
+            margin-top: 20px;
+            text-align: center;
+            color: #666;
+        }
+        
+        .preview-info div {
+            margin: 5px 0;
+        }
+        
+        .new-profile-btn {
+            width: 100%;
+            margin-bottom: 15px;
+        }
+        
+        .alert {
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            display: none;
+        }
+        
+        .alert.success {
+            background: #d4edda;
+            border: 1px solid #c3e6cb;
+            color: #155724;
+        }
+        
+        .alert.error {
+            background: #f8d7da;
+            border: 1px solid #f5c6cb;
+            color: #721c24;
+        }
+        
+        .alert.show {
+            display: block;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🖨️ Smart Printer Configuration</h1>
+            <p>Design and configure your perfect print settings</p>
+        </div>
+        
+        <div class="main-content">
+            <!-- Left Column: Profiles & Presets -->
+            <div class="profiles-section section">
+                <h2>Profiles & Presets</h2>
+                
+                <button class="btn btn-primary new-profile-btn" onclick="createNewProfile()">
+                    + New Profile
+                </button>
+                
+                <div>
+                    <strong style="color: #764ba2; margin-bottom: 10px; display: block;">Quick Presets</strong>
+                    <div class="preset-buttons">
+                        <button class="preset-btn" onclick="applyPreset('draft_documents')">
+                            <strong>📄 Draft Documents</strong>
+                            <small>Fast, grayscale, duplex</small>
+                        </button>
+                        <button class="preset-btn" onclick="applyPreset('photo_quality')">
+                            <strong>📸 Photo Quality</strong>
+                            <small>High quality, color</small>
+                        </button>
+                        <button class="preset-btn" onclick="applyPreset('text_heavy')">
+                            <strong>📝 Text Heavy</strong>
+                            <small>Standard, grayscale</small>
+                        </button>
+                    </div>
+                </div>
+                
+                <div>
+                    <strong style="color: #764ba2; margin-bottom: 10px; display: block;">Saved Profiles</strong>
+                    <div class="profile-list" id="profileList">
+                        <!-- Profiles will be loaded here -->
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Middle Column: Configuration Form -->
+            <div class="config-section section">
+                <h2>Printer Settings</h2>
+                
+                <div class="alert" id="alert"></div>
+                
+                <form id="printerForm">
+                    <input type="hidden" id="profileId" value="">
+                    
+                    <div class="form-group">
+                        <label for="profileName">Profile Name</label>
+                        <input type="text" id="profileName" placeholder="e.g., My Custom Profile" required>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="paperSize">Paper Size</label>
+                        <select id="paperSize">
+                            <option value="Letter">Letter (8.5" × 11")</option>
+                            <option value="Legal">Legal (8.5" × 14")</option>
+                            <option value="A4">A4 (210mm × 297mm)</option>
+                            <option value="A3">A3 (297mm × 420mm)</option>
+                            <option value="Photo 4x6">Photo 4×6"</option>
+                            <option value="Photo 5x7">Photo 5×7"</option>
+                        </select>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="orientation">Orientation</label>
+                        <select id="orientation">
+                            <option value="Portrait">Portrait</option>
+                            <option value="Landscape">Landscape</option>
+                        </select>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="colorMode">Color Mode</label>
+                        <select id="colorMode">
+                            <option value="Color">Color</option>
+                            <option value="Grayscale">Grayscale</option>
+                            <option value="Black and White">Black and White</option>
+                        </select>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="quality">Print Quality</label>
+                        <select id="quality">
+                            <option value="Draft">Draft (Fast)</option>
+                            <option value="Standard">Standard</option>
+                            <option value="High">High Quality</option>
+                            <option value="Best">Best Quality</option>
+                        </select>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="copies">Number of Copies</label>
+                        <input type="number" id="copies" min="1" max="99" value="1">
+                    </div>
+                    
+                    <div class="form-group">
+                        <div class="checkbox-group">
+                            <input type="checkbox" id="duplex">
+                            <label for="duplex">Enable Duplex (Two-sided printing)</label>
+                        </div>
+                    </div>
+                    
+                    <div class="form-group">
+                        <div class="checkbox-group">
+                            <input type="checkbox" id="isFavorite">
+                            <label for="isFavorite">⭐ Mark as Favorite</label>
+                        </div>
+                    </div>
+                    
+                    <div class="button-group">
+                        <button type="button" class="btn btn-primary" onclick="saveProfile()">
+                            💾 Save Profile
+                        </button>
+                        <button type="button" class="btn btn-secondary" onclick="updatePreview()">
+                            👁️ Preview
+                        </button>
+                    </div>
+                </form>
+            </div>
+            
+            <!-- Right Column: Preview -->
+            <div class="preview-section section">
+                <h2>Print Preview</h2>
+                
+                <div class="preview-area" id="previewArea">
+                    <div class="preview-page portrait" id="previewPage">
+                        <div class="preview-content" id="previewContent">
+                            <p><strong>Sample Document</strong></p>
+                            <p>This is a preview of how your document will appear when printed with the selected settings.</p>
+                            <p>The actual output may vary depending on your printer capabilities.</p>
+                        </div>
+                    </div>
+                    <div class="preview-info" id="previewInfo">
+                        <div><strong>Settings Preview</strong></div>
+                        <div id="previewDetails">Click "Preview" to see your settings</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <script>
+        // Global state
+        let currentProfile = null;
+        let profiles = [];
+        let presets = {};
+        
+        // Initialize on page load
+        document.addEventListener('DOMContentLoaded', function() {
+            loadProfiles();
+            loadPresets();
+        });
+        
+        // Load all profiles
+        async function loadProfiles() {
+            try {
+                const response = await fetch('/printer/profiles');
+                const data = await response.json();
+                if (data.status === 'success') {
+                    profiles = data.profiles;
+                    renderProfiles();
+                }
+            } catch (error) {
+                showAlert('Error loading profiles: ' + error.message, 'error');
+            }
+        }
+        
+        // Load presets
+        async function loadPresets() {
+            try {
+                const response = await fetch('/printer/presets');
+                const data = await response.json();
+                if (data.status === 'success') {
+                    presets = data.presets;
+                }
+            } catch (error) {
+                console.error('Error loading presets:', error);
+            }
+        }
+        
+        // Render profile list
+        function renderProfiles() {
+            const list = document.getElementById('profileList');
+            list.innerHTML = '';
+            
+            profiles.forEach(profile => {
+                const item = document.createElement('div');
+                item.className = 'profile-item' + (profile.is_favorite ? ' favorite' : '');
+                if (currentProfile && currentProfile.id === profile.id) {
+                    item.classList.add('active');
+                }
+                
+                item.innerHTML = `
+                    <span onclick="loadProfile('${profile.id}')">${profile.name}</span>
+                    <div class="profile-actions">
+                        <button class="btn btn-danger btn-small" onclick="deleteProfile('${profile.id}', event)">×</button>
+                    </div>
+                `;
+                
+                list.appendChild(item);
+            });
+        }
+        
+        // Load a specific profile
+        function loadProfile(profileId) {
+            const profile = profiles.find(p => p.id === profileId);
+            if (profile) {
+                currentProfile = profile;
+                document.getElementById('profileId').value = profile.id;
+                document.getElementById('profileName').value = profile.name;
+                document.getElementById('paperSize').value = profile.paper_size;
+                document.getElementById('orientation').value = profile.orientation;
+                document.getElementById('colorMode').value = profile.color_mode;
+                document.getElementById('quality').value = profile.quality;
+                document.getElementById('copies').value = profile.copies;
+                document.getElementById('duplex').checked = profile.duplex;
+                document.getElementById('isFavorite').checked = profile.is_favorite;
+                renderProfiles();
+                updatePreview();
+            }
+        }
+        
+        // Create new profile
+        function createNewProfile() {
+            currentProfile = null;
+            document.getElementById('profileId').value = '';
+            document.getElementById('printerForm').reset();
+            document.getElementById('profileName').value = '';
+            document.getElementById('copies').value = 1;
+            renderProfiles();
+        }
+        
+        // Save profile
+        async function saveProfile() {
+            const profileId = document.getElementById('profileId').value;
+            const profileData = {
+                name: document.getElementById('profileName').value,
+                paper_size: document.getElementById('paperSize').value,
+                orientation: document.getElementById('orientation').value,
+                color_mode: document.getElementById('colorMode').value,
+                quality: document.getElementById('quality').value,
+                copies: parseInt(document.getElementById('copies').value),
+                duplex: document.getElementById('duplex').checked,
+                is_favorite: document.getElementById('isFavorite').checked
+            };
+            
+            if (!profileData.name) {
+                showAlert('Please enter a profile name', 'error');
+                return;
+            }
+            
+            try {
+                let response;
+                if (profileId) {
+                    // Update existing profile
+                    response = await fetch(`/printer/profiles/${profileId}`, {
+                        method: 'PUT',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(profileData)
+                    });
+                } else {
+                    // Create new profile
+                    response = await fetch('/printer/profiles', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(profileData)
+                    });
+                }
+                
+                const data = await response.json();
+                if (data.status === 'success') {
+                    showAlert(data.message, 'success');
+                    await loadProfiles();
+                    if (data.profile) {
+                        loadProfile(data.profile.id);
+                    }
+                } else {
+                    showAlert(data.message, 'error');
+                }
+            } catch (error) {
+                showAlert('Error saving profile: ' + error.message, 'error');
+            }
+        }
+        
+        // Delete profile
+        async function deleteProfile(profileId, event) {
+            event.stopPropagation();
+            
+            if (!confirm('Are you sure you want to delete this profile?')) {
+                return;
+            }
+            
+            try {
+                const response = await fetch(`/printer/profiles/${profileId}`, {
+                    method: 'DELETE'
+                });
+                
+                const data = await response.json();
+                if (data.status === 'success') {
+                    showAlert(data.message, 'success');
+                    if (currentProfile && currentProfile.id === profileId) {
+                        createNewProfile();
+                    }
+                    await loadProfiles();
+                } else {
+                    showAlert(data.message, 'error');
+                }
+            } catch (error) {
+                showAlert('Error deleting profile: ' + error.message, 'error');
+            }
+        }
+        
+        // Apply preset
+        function applyPreset(presetKey) {
+            const preset = presets[presetKey];
+            if (preset) {
+                document.getElementById('profileName').value = preset.name;
+                document.getElementById('paperSize').value = preset.paper_size;
+                document.getElementById('orientation').value = preset.orientation;
+                document.getElementById('colorMode').value = preset.color_mode;
+                document.getElementById('quality').value = preset.quality;
+                document.getElementById('copies').value = preset.copies;
+                document.getElementById('duplex').checked = preset.duplex;
+                updatePreview();
+                showAlert(`Preset "${preset.name}" applied!`, 'success');
+            }
+        }
+        
+        // Update preview
+        async function updatePreview() {
+            const settings = {
+                paper_size: document.getElementById('paperSize').value,
+                orientation: document.getElementById('orientation').value,
+                color_mode: document.getElementById('colorMode').value,
+                quality: document.getElementById('quality').value,
+                copies: parseInt(document.getElementById('copies').value),
+                duplex: document.getElementById('duplex').checked
+            };
+            
+            try {
+                const response = await fetch('/printer/preview', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(settings)
+                });
+                
+                const data = await response.json();
+                if (data.status === 'success') {
+                    const preview = data.preview;
+                    
+                    // Update preview page orientation
+                    const previewPage = document.getElementById('previewPage');
+                    previewPage.className = 'preview-page ' + preview.orientation.toLowerCase();
+                    
+                    // Update preview details
+                    const details = document.getElementById('previewDetails');
+                    details.innerHTML = `
+                        <div><strong>Paper:</strong> ${preview.paper_size}</div>
+                        <div><strong>Orientation:</strong> ${preview.orientation}</div>
+                        <div><strong>Color:</strong> ${preview.color_mode}</div>
+                        <div><strong>Quality:</strong> ${preview.quality}</div>
+                        <div><strong>Copies:</strong> ${preview.copies}</div>
+                        <div><strong>Duplex:</strong> ${preview.duplex ? 'Yes' : 'No'}</div>
+                    `;
+                    
+                    // Apply color mode effect
+                    const content = document.getElementById('previewContent');
+                    if (preview.color_mode === 'Grayscale' || preview.color_mode === 'Black and White') {
+                        content.style.filter = 'grayscale(100%)';
+                    } else {
+                        content.style.filter = 'none';
+                    }
+                }
+            } catch (error) {
+                console.error('Error updating preview:', error);
+            }
+        }
+        
+        // Show alert message
+        function showAlert(message, type) {
+            const alert = document.getElementById('alert');
+            alert.textContent = message;
+            alert.className = 'alert ' + type + ' show';
+            setTimeout(() => {
+                alert.classList.remove('show');
+            }, 3000);
+        }
+    </script>
+</body>
+</html>
